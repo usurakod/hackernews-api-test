@@ -1,0 +1,127 @@
+/*
+Using the Top Stories API to retrieve the current top story from the Items API
+
+Step 1 — Get Top Story IDs
+
+Request:
+GET https://hacker-news.firebaseio.com/v0/topstories.json?print=pretty */
+
+
+/* Save the first top story ID to environment variable
+let topStories = pm.response.json();
+pm.environment.set("topStoryId", topStories[0]);
+pm.test("Top stories list fetched", function() {
+    pm.expect(topStories.length).to.be.above(0);
+});
+
+ Request 2: GET Current Top Story
+
+URL:
+https://hacker-news.firebaseio.com/v0/item/{{topStoryId}}.json?print=pretty 
+
+let story = pm.response.json();
+
+pm.test("Top story details are valid", function () {
+    pm.expect(story).to.have.property("id");
+    pm.expect(story).to.have.property("title");
+    pm.expect(story).to.have.property("by");
+    pm.expect(story).to.have.property("time");
+});
+
+console.log("Current Top Story:");
+console.log("Title:", story.title);
+console.log("Author:", story.by);
+console.log("URL:", story.url);  */
+
+// PostMan Collection - Hacker News: Current Top Story
+
+{
+  "info": {
+    "name": "Hacker News - Current Top Story",
+    "_postman_id": "c2a5e6c8-72d3-4b18-b3a4-19e38a93c08e",
+    "description": "Retrieves the current top story using Hacker News API: first from topstories.json, then item/<id>.json",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1️⃣ Get Top Stories",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "https://hacker-news.firebaseio.com/v0/topstories.json?print=pretty",
+          "protocol": "https",
+          "host": ["hacker-news", "firebaseio", "com"],
+          "path": ["v0", "topstories.json"],
+          "query": [
+            {
+              "key": "print",
+              "value": "pretty"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Validate response and save top story ID",
+              "let topStories = pm.response.json();",
+              "pm.test('Fetched top stories successfully', function () {",
+              "    pm.expect(pm.response.code).to.eql(200);",
+              "    pm.expect(topStories.length).to.be.above(0);",
+              "});",
+              "",
+              "// Save the first story ID to environment variable",
+              "pm.environment.set('topStoryId', topStories[0]);",
+              "console.log('✅ Top Story ID saved:', topStories[0]);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2️⃣ Get Current Top Story Details",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "https://hacker-news.firebaseio.com/v0/item/{{topStoryId}}.json?print=pretty",
+          "protocol": "https",
+          "host": ["hacker-news", "firebaseio", "com"],
+          "path": ["v0", "item", "{{topStoryId}}.json"],
+          "query": [
+            {
+              "key": "print",
+              "value": "pretty"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Validate the top story details",
+              "let story = pm.response.json();",
+              "pm.test('Fetched current top story successfully', function () {",
+              "    pm.expect(pm.response.code).to.eql(200);",
+              "    pm.expect(story).to.have.property('id');",
+              "    pm.expect(story).to.have.property('title');",
+              "    pm.expect(story).to.have.property('by');",
+              "});",
+              "",
+              "console.log('📰 Current Top Story:');",
+              "console.log('Title:', story.title);",
+              "console.log('Author:', story.by);",
+              "console.log('URL:', story.url);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    }
+  ]
+}
+
