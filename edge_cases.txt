@@ -1,0 +1,97 @@
+1. API Availability and Timeout
+Test: Simulate slow network or unreachable endpoint.
+Why: Ensure client or monitoring system correctly handles timeouts or connection failures.
+
+Expected Result:
+Returns HTTP 5xx (server) or timeout error within configured threshold.
+Client gracefully reports “API unavailable”.
+
+2. Empty Response
+Scenario: API returns an empty list [].
+(Could happen if no stories are currently promoted to “top”.)
+Expected Result:
+Status: 200 OK
+Response body: empty array
+Client should not crash or assume data[0] exists.
+
+Test in Postman:
+pm.test("Response handles empty array", function () {
+    let data = pm.response.json();
+    if (data.length === 0) {
+        console.warn("No top stories available, handled gracefully");
+    } else {
+        pm.expect(data.length).to.be.above(0);
+    }
+});
+
+3. Malformed or Unexpected Data
+Scenario: API returns invalid JSON or array with non-integer values.
+(e.g., [123, "abc", null])
+
+Expected Result:
+Client validation catches type mismatch (only integers allowed).
+Logs an appropriate error message.
+Test:
+pm.test("All IDs are valid numbers", function () {
+    let data = pm.response.json();
+    data.forEach(id => pm.expect(id).to.be.a('number'));
+});
+
+4. Large Payload Handling
+Scenario: The API returns hundreds or thousands of story IDs.
+Why: Validate client performance and JSON parsing under large data loads.
+
+Expected Result:
+Response parsing time and memory usage remain acceptable.
+No truncation or partial reads.
+
+Can test this with a Postman performance check:
+pm.test("Handles large response size efficiently", function () {
+    pm.expect(pm.response.responseSize).to.be.below(100000); // < 100 KB
+});
+
+5. Rate Limiting / API Abuse
+Scenario: Multiple rapid requests to the same endpoint.
+Why: Some APIs may throttle or block excessive calls.
+
+Expected Result:
+Either consistent 200 OK responses, or
+API returns 429 Too Many Requests if throttled.
+
+Postman Runner Tip:
+Run the request 20–50 times in a loop and verify stability.
+
+6. Invalid Method
+Scenario: Send a POST or PUT instead of GET.
+
+Expected Result:
+Status: 405 Method Not Allowed or 400 Bad Request.
+No data returned.
+
+Example Test:
+pm.test("Invalid method not allowed", function () {
+    pm.expect(pm.response.code).to.be.oneOf([400, 405]);
+});
+
+7. Response Structure Consistency
+Scenario: API format changes (e.g., key names, JSON format).
+Why: Regression test for schema validation.
+
+Expected Result:
+Array structure remains the same.
+No unexpected wrapper objects appear.
+
+Schema Check Example:
+pm.test("Response matches expected schema", function () {
+    let data = pm.response.json();
+    pm.expect(Array.isArray(data)).to.be.true;
+    pm.expect(typeof data[0]).to.equal("number");
+});
+
+8. Handling Network Errors (Client-Side)
+Scenario: DNS failure, SSL issue, or invalid base URL.
+Why: To ensure your API wrapper handles network exceptions cleanly.
+
+Expected Result:
+Returns meaningful error message (e.g., “Network error”).
+No unhandled exceptions or crashes.
