@@ -1,0 +1,120 @@
+/* Get a top story ID using /v0/topstories.json
+Get that story’s details using /v0/item/<story_id>.json
+Retrieve its first comment using /v0/item/<comment_id>.json 
+
+Postman Collection JSON  */
+
+{
+  "info": {
+    "name": "Hacker News Top Story and First Comment Flow",
+    "_postman_id": "aa11bb22-cc33-dd44-ee55-ff6677889900",
+    "description": "Retrieves the current top story from Hacker News and its first comment using the Items API.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1️⃣ Get Top Stories",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://hacker-news.firebaseio.com/v0/topstories.json?print=pretty",
+          "protocol": "https",
+          "host": ["hacker-news", "firebaseio", "com"],
+          "path": ["v0", "topstories.json"],
+          "query": [{ "key": "print", "value": "pretty" }]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "let topStories = pm.response.json();",
+              "pm.test('Fetched top stories successfully', function () {",
+              "    pm.expect(pm.response.code).to.eql(200);",
+              "    pm.expect(topStories.length).to.be.above(0);",
+              "});",
+              "",
+              "// Save first story ID",
+              "pm.environment.set('topStoryId', topStories[0]);",
+              "console.log('Top Story ID:', topStories[0]);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2️⃣ Get Top Story Details",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://hacker-news.firebaseio.com/v0/item/{{topStoryId}}.json?print=pretty",
+          "protocol": "https",
+          "host": ["hacker-news", "firebaseio", "com"],
+          "path": ["v0", "item", "{{topStoryId}}.json"],
+          "query": [{ "key": "print", "value": "pretty" }]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "let story = pm.response.json();",
+              "pm.test('Top story fetched successfully', function () {",
+              "    pm.expect(pm.response.code).to.eql(200);",
+              "    pm.expect(story).to.have.property('title');",
+              "    pm.expect(story).to.have.property('by');",
+              "});",
+              "",
+              "// Ensure story has comments (kids)",
+              "if (story.kids && story.kids.length > 0) {",
+              "    pm.environment.set('firstCommentId', story.kids[0]);",
+              "    console.log('First Comment ID:', story.kids[0]);",
+              "} else {",
+              "    console.warn('This top story has no comments!');",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3️⃣ Get First Comment",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://hacker-news.firebaseio.com/v0/item/{{firstCommentId}}.json?print=pretty",
+          "protocol": "https",
+          "host": ["hacker-news", "firebaseio", "com"],
+          "path": ["v0", "item", "{{firstCommentId}}.json"],
+          "query": [{ "key": "print", "value": "pretty" }]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "let comment = pm.response.json();",
+              "pm.test('Fetched first comment successfully', function () {",
+              "    pm.expect(pm.response.code).to.eql(200);",
+              "    pm.expect(comment).to.have.property('by');",
+              "    pm.expect(comment).to.have.property('text');",
+              "});",
+              "",
+              "console.log('First Comment Author:', comment.by);",
+              "console.log('Comment Text:', comment.text);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    }
+  ]
+}
