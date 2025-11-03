@@ -1,0 +1,92 @@
+""" Retrieving top stories with the Top Stories API
+
+API Endpoint:
+GET https://hacker-news.firebaseio.com/v0/topstories.json?print=pretty
+
+Purpose:
+Ensure the API returns a list of top story IDs correctly, in the expected format. 
+
+Test Scenarios
+
+Scenario 1: Successful Response
+Given the API is available
+When a GET request is made to /v0/topstories.json
+Then the response status code should be 200 OK
+And the response should be a JSON array
+And each element in the array should be a positive integer (representing a story ID)
+And the array should not be empty
+
+Scenario 2: Response Time
+Given the API is available 
+When a GET request is made
+Then the response time should be under 2 seconds
+
+Scenario 3: Data Consistency
+Given the API is available
+When a GET request is made
+Then the first 10 IDs in the response should correspond to actual stories accessible via /v0/item/<id>.json
+
+Scenario 4: Invalid Method
+Given the API is available
+When a POST request is made to /v0/topstories.json
+Then the response status code should be 405 Method Not Allowed 
+
+Acceptance Criteria
+Must return a 200 status code for GET requests.
+Response must be a non-empty array of integers.
+Response must be reasonably fast (< 2s).
+Must reject invalid HTTP methods (POST, PUT, DELETE)."""
+
+import requests
+import pytest
+
+BASE_URL = "https://hacker-news.firebaseio.com/v0"
+TOP_STORIES_ENDPOINT = f"{BASE_URL}/topstories.json?print=pretty"
+
+# Scenario 1: Successful GET request
+def test_get_top_stories_status_code():
+    response = requests.get(TOP_STORIES_ENDPOINT)
+    assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+
+# Scenario 1: Response format validation
+def test_get_top_stories_response_format():
+    response = requests.get(TOP_STORIES_ENDPOINT)
+    data = response.json()
+    assert isinstance(data, list), "Response should be a list"
+    assert len(data) > 0, "Response list should not be empty"
+    for item in data:
+        assert isinstance(item, int) and item > 0, f"Each item should be a positive integer, got {item}"
+
+# Scenario 2: Response time
+def test_get_top_stories_response_time():
+    response = requests.get(TOP_STORIES_ENDPOINT)
+    assert response.elapsed.total_seconds() < 2, f"Response took too long: {response.elapsed.total_seconds()}s"
+
+# Scenario 3: Data consistency - check first 5 IDs exist
+def test_top_story_ids_exist():
+    response = requests.get(TOP_STORIES_ENDPOINT)
+    top_ids = response.json()[:5]  # Check first 5 for simplicity
+    for story_id in top_ids:
+        story_response = requests.get(f"{BASE_URL}/item/{story_id}.json")
+        assert story_response.status_code == 200, f"Story {story_id} not found"
+        story_data = story_response.json()
+        assert story_data is not None, f"Story {story_id} returned null"
+
+# Scenario 4: Invalid method (POST)
+def test_post_not_allowed():
+    response = requests.post(TOP_STORIES_ENDPOINT)
+    assert response.status_code in [405, 400], f"Expected 405 or 400 for POST, got {response.status_code}"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
